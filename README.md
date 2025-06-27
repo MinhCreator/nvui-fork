@@ -41,22 +41,10 @@ In your plugins file
 - Auto-generated mappings cheatsheet module, which has a similar layout to that of CSS's masonry layout.
 - It has 2 themes ( grid & simple )
 ![img](https://nvchad.com/features/nvcheatsheet.webp)
-
-## Automatic Mason install 
-
-- MasonInstallAll command will now capture all the mason tools from your config
-- Supported plugins are : lspconfig, nvim-lint, conform.nvim
-- So for example if you have lspconfig like this :
-
-```lua 
-require("lspconfig").html.setup{}
-require("lspconfig").clangd.setup{}
-``` 
- 
-Then running MasonInstallAll will install both the mason pkgs 
-
-check `:h nvui.mason` for more info
+## NvThemePicker
+- Choose your prefer builtin theme or integration external theme
+![video](https://www.youtube.com/watch?v=xytzreFq_us&embeds_referring_euri=https%3A%2F%2Fnvchad.com%2F)
 
 # Credits
 
-- Huge thanks to [@siduck](https://github.com/NvChad) for creating `nvchad_types`.
+- Huge thanks to [@siduck](https://github.com/NvChad) for creating [nvchad-ui](https://github.com/NvChad/ui).
