@@ -1,0 +1,369 @@
+*nvui* Docs for NvChad's base46 and UI
+
+                           `  ▄▄         ▄ ▄▄▄▄▄▄▄  `
+                           `▄▀███▄     ▄██ █████▀ `
+                           `██▄▀███▄   ███        `
+                           `███  ▀███▄ ███        `
+                           `███    ▀██ ███        `
+                           `███      ▀ ███        `
+                           `▀██ █████▄▀█▀▄██████▄ `
+                           `  ▀ ▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀`
+
+==============================================================================
+CONTENTS                                                         *nvui.contents* 
+ 
+ 1. `Introduction`                                      |nvui.intro|
+    1.1 UI & Base46 Plugin Install                    |nvui.plugin-install|
+ 
+ 2. `Default Chadrc Options`                            |nvui.chadrc.options|
+ 
+ 3. `Base46 Theming`                                    |nvui.base46|
+    3.1 Api                                           |nvui.base46.api|
+    3.2 Highlight Override                            |nvui.base46.highlights|
+    3.3 Customize Themes                              |nvui.base46.edit_themes|
+    3.4 Integrations                                  |nvui.base46.integrations|
+    3.5 Local Themes                                  |nvui.base46.local_themes|
+ 
+ 4. `Telescope Extensions`                              |nvui.telescope|
+    4.1 Base46 Themes                                 |nvui.telescope.themes|
+
+ 5. `Cheatsheet`                                       |nvui.cheatsheet|
+ 6. `Modern Theme picker`                              |nvui.theme-picker|
+
+==============================================================================
+1. Introduction                                                     *nvui.intro*
+
+		   	     How does it work?
+                             ─────────────────
+
+      ` ┌────────────────────────┐         ┌────────────────────────────┐
+      ` │      nvconfig.lua     │         │        chadrc.lua         │
+      ` ├────────────────────────┤         ├────────────────────────────┤
+       │  Has default options  │        │  User options             │
+       │                        │         │  These override nvconfig  │
+       │  {                     │         └────────────┬───────────────┘
+       │    ui = {...},         │                      │
+       │    base46 = {...},     │                      │
+       │  }                     │                      │
+       └────────────────────────┘                      │
+                    │                                  │
+                    └─────────────────┬────────────────┘
+                                      │      
+                                      ▼      
+                      The options are merged 
+                      Available in |require('nvconfig')|
+     	              Then used by UI & Base46 plugin
+
+The file `lua/chadrc.lua` is user's config file used to customize Base46 & UI
+plugin and it needs to return a table, example:
+>lua
+ local M = {}
+
+ M.base46 = {
+   theme = "onedark",
+   transparency = true,
+ }
+
+ return M
+<
+------------------------------------------------------------------------------
+1.1 UI & Base46 plugin setup                                *nvui.plugin-install*
+
+In your plugins file
+>lua
+ "nvim-lua/plenary.nvim",
+
+ {
+   "nvchad/ui",
+    config = function()
+      require "nvchad" 
+    end
+ },
+
+ {
+    "nvchad/base46",
+    lazy = true,
+    build = function()
+      require("base46").load_all_highlights()
+    end,
+ },
+
+ "nvzone/volt", -- optional, needed for theme switcher
+<
+Base46 setup
+>lua
+ -- put this in your main init.lua file ( before lazy setup )
+ vim.g.base46_cache = vim.fn.stdpath "data" .. "/base46_cache/"
+
+ -- put this after lazy setup
+ dofile(vim.g.base46_cache .. "defaults")
+
+==============================================================================
+2. Default Chadrc Options                                  *nvui.chadrc.options*
+
+These are the default options for UI/Base46 plugin. No need to write them all 
+Only those you want to change and the it'll override the defaults.
+
+nvconfig file : |https://github.com/NvChad/ui/blob/v3.0/lua/nvconfig.lua|
+>lua
+ {
+   base46 = {
+     theme = "onedark",
+     hl_add = {},
+     hl_override = {},
+     integrations = {},
+     changed_themes = {},
+     transparency = false,
+     theme_toggle = { "onedark", "one_light" },
+   },
+
+   ui = {
+     },
+ 
+     telescope = { style = "borderless" }, -- borderless / bordered
+ 
+   cheatsheet = {
+     theme = "grid", -- simple/grid
+     excluded_groups = { "terminal (t)", "autopairs", "Nvim", "Opens" }, -- can add group name or with mode
+   },
+ }
+ 
+==============================================================================
+3. Base46 theming                                                  *nvui.base46*
+
+			     How does it work?
+                             ─────────────────
+
+             |Functionality|                           
+┌──────────────────────────────────────┐              Base46 compiles them
+│  Theme file with colors             │            ┌───────────────────────┬┐
+│  Integrations i.e highlight groups  ├───────────►│ `Highlight cache files` ││
+│  User highlight groups & overrides  │            └────┬──────────────────┴┘
+│  Theme specific highlight overrides │                 │
+└──────────────────────────────────────┘                 │
+                                                         │ (example)  
+                                             ┌───────┬───┴───┬────────┐
+                                             │       │       │        │
+                                             ▼       ▼       ▼        ▼
+                                         defaults   cmp  treesitter  nvim-tree
+
+
+- So basically base46 compiles the highlight groups with modifications into 
+  cache files. Running the cache file will load highlight groups.
+
+Note:
+To load the cache file, use the |dofile| function
+>lua
+ dofile(vim.g.base46_cache .. "syntax")
+<
+Set the |base46_cache| global before initializing plugins (before lazy.setup)
+>lua
+ vim.g.base46_cache = vim.fn.stdpath "data" .. "/base46" 
+<
+These are the default highlight groups, load them in init.lua
+>lua
+ dofile(vim.g.base46_cache .. "syntax")
+ dofile(vim.g.base46_cache .. "defaults")
+ dofile(vim.g.base46_cache .. "statusline")
+<
+Then load the cache files individually, like : 
+>lua
+  {
+    "nvim-treesitter/nvim-treesitter",
+    event = { "BufReadPost", "BufNewFile" },
+    config = function()
+      dofile(vim.g.base46_cache .. "treesitter")
+      require("nvim-treesitter.configs").setup()
+    end,
+  }
+<
+Note: You can load all cache files at once instead of lazyloading them
+>lua
+ for _, v in ipairs(vim.fn.readdir(vim.g.base46_cache)) do
+   dofile(vim.g.base46_cache .. v)
+ end
+<
+------------------------------------------------------------------------------
+3.1 Base46 API                                                 *nvui.base46.api*
+
+Get theme colors: ~
+>lua
+ local colors = dofile(vim.g.base46_cache .. "colors")
+ print(colors.black2)
+<
+Compile: ~
+
+If for some reason you highlights look weird then compile base46 highlights 
+>lua
+ require("base46").compile()
+ require("base46").load_all_highlights() -- compiles+loads them
+<
+Toggle Theme: ~
+>lua
+ -- toggles themes from M.base46.theme_toggle
+ require("base46").toggle_theme() 
+<
+Toggle transparency: ~
+>lua
+ require('base46').toggle_transparency()
+<
+Theme Switching manually: ~
+
+Users sometimes use scripts or programs that set system theme, like pywal etc
+To change the theme without theme switcher:
+>lua
+ require("nvconfig").base46.theme = 'nord'
+ require("base46").load_all_highlights()
+
+Setting themes outside of Neovim: ~
+>bash
+ # run code that saves theme name in chadrc first
+ # then loop over all nvim instances and send the function!
+ 
+ for addr in $XDG_RUNTIME_DIR/nvim.*; do
+  nvim --server $addr --remote-send ':lua require("nvchad.utils").reload() <cr>'
+ done
+
+------------------------------------------------------------------------------
+3.2 Highlight override                                  *nvui.base46.highlights*
+
+- Make sure you use a valid highlight group.
+- Check your theme colors in the base46 theme dir
+- To know which highlight groups are available, check base46 integrations dir
+- You can use the variable names from your theme's base_30 table, like black2,
+  one_bg etc.
+
+>lua
+ M.base46 = {
+   hl_override = {
+      Pmenu = { bg = "black2" },
+      -- Pmenu = { bg = "#ffffff" }, this works too
+        
+      -- lighten or darken base46 theme variable
+      -- this will use the black color from base46.theme & lighten it by 2x
+      -- negative number will darken it
+      Normal = {
+        bg = { "black", 2 }
+      },
+
+      -- mix colors, mixes black/blue from your theme by 10%
+      PmenuSel = {
+        bg = { "black", "blue", 10 }
+      },
+   },
+ }
+<
+- To add new highlight groups, use |hl_add|
+
+------------------------------------------------------------------------------
+3.3 Customize themes                                   *nvui.base46.edit_themes*
+
+To edit an already existing theme, use `base46.changed_themes` option.
+>lua
+ M.base46 = {
+   changed_themes = {
+      nord = {
+         base_16 = { base00 = "#mycol" },
+         base_30 = {
+            red = "#mycol",
+            black2 = "#mycol",
+         },
+      },
+
+      onedark = { ... },
+   },
+ }
+<
+------------------------------------------------------------------------------
+3.4 Base46 integrations                               *nvui.base46.integrations*
+
+An integration file is a group of highlight groups, for example cmp
+integration, telescope etc.
+
+There are many integration files but only few are compiled by default, to 
+include other ones, use `base46.integrations` option
+>lua
+ M.base46 = {
+   integrations = { "dap", "hop" },
+ }
+
+- The base46 compile function includes the above hl groups for compilation
+- To load them, use dofile function + full path of the cache file.
+
+ `dofile(vim.g.base46_cache .. "dap")`
+
+Note: 
+
+It's preferred to put the dofile code in your plugin's config func
+>lua
+ {
+   "folke/trouble.nvim",
+    cmd = "Trouble",
+    config = function()
+       dofile(vim.g.base46_cache .. "trouble")
+       require("trouble").setup()
+    end
+ }
+<
+------------------------------------------------------------------------------
+3.5 Local themes		                      *nvui.base46.local_themes*
+
+- Put the theme file in `lua/themes/` folder 
+- Check the base46 readme for theme file structure 
+
+|https://github.com/nvchad/base46#understanding-theme-variables|
+
+==============================================================================
+4. Telescope extensions                                         *nvui.telescope*
+
+There are 2 telescope extensions available : themes, terms
+
+------------------------------------------------------------------------------
+4.1 Base46 themes                                       *nvui.telescope.themes*
+
+- This will list all base46 themes in telescope window and cycling over them
+  will change themes on fly, pressing enter will save the theme to chadrc.lua
+
+Command : `Telescope themes`
+
+==============================================================================
+5. Cheatsheet                                                 *nvui.cheatsheet*
+
+This shows mappings in a pretty cheatsheet format on the buffer
+>lua
+ M.cheatsheet = {
+   theme = "grid", -- simple/grid
+   excluded_groups = { "terminal (t)", "autopairs", "Nvim", "Opens" }, -- can add group name or with mode
+ }
+<
+Notes:
+
+- The excluded_groups will remove that group's column from the cheatsheet. 
+
+- For example `terminal` there will remove all columns which had the name "terminal"
+  in it (with modename removed) `"terminal (t)"` removes the terminal column 
+  which had |(t)| in it.
+
+==============================================================================
+6. Modern Theme picker                                      *nvui.theme-picker*
+
+- This is a theme picker created from volt ui library! 
+- It has 3 styles, `compact`, `minimal` & `default`
+
+NOTE: API
+>lua
+ require("nvchad.themes").open()
+
+ opts: ~  
+
+  {
+    icon = "", -- optional
+    style = "compact", -- optional! compact/flat/bordered
+    border = false,
+  }
+
+ example: ~
+
+   require("nvchad.themes").open { style = "flat" }
+<
+vim:tw=78:ts=8:noet:ft=help:norl:
