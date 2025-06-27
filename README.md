@@ -43,12 +43,7 @@ In your plugins file
 ![img](https://nvchad.com/features/nvcheatsheet.webp)
 ## NvThemePicker
 - Choose your prefer builtin theme or integration external theme
-<iframe width="560" height="315"
-src="https://www.youtube.com/watch?v=xytzreFq_us&embeds_referring_euri=https%3A%2F%2Fnvchad.com%2F" 
-frameborder="0" 
-allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
-allowfullscreen>
-</iframe>
+[![IMAGE](https://img.youtube.com/vi/xytzreFq_us/0.jpg)](https://www.youtube.com/watch?v=xytzreFq_us)
 # Credits
 
 - Huge thanks to [@siduck](https://github.com/NvChad) for creating [nvchad-ui](https://github.com/NvChad/ui).
